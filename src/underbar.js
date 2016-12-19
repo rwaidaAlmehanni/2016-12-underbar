@@ -126,7 +126,7 @@
    * as an example of this.
    */
 
-  // Takes an array of objects and returns and array of the values of
+  // Takes an array of objects and returns an array of the values of
   // a certain property in it. E.g. take an array of people and return
   // an array of just their ages
   _.pluck = function(collection, key) {
@@ -312,28 +312,15 @@ return true;
   // instead if possible.
   _.memoize = function(func) {
     var obj={};
-   // var arg=Array.prototype.slice.call(arguments,1);
-   // var f=JSON.stringify(arguments);
-     // return function(){
-     //  var f=JSON.stringify(arguments);
-     //  if (arr[f]===undefined){
-     //      arr[f]=func.apply(this,arguments);
-     //      }
-     //       return arr[f];
-     //    }
-return function(){
-     var str=JSON.stringify(arguments);
-     var arg=arguments;
-     //console.log(arg)
-     if (obj[str]===undefined) {
-      obj[str]=func.apply(this,arg);
-      }
-    return obj[str];
-  }
-            
-         
-      
-      
+   var arg=Array.prototype.slice.call(arguments,1);
+   var f=JSON.stringify(arguments);
+     return function(){
+      var f=JSON.stringify(arguments);
+      if (obj[f]===undefined){
+          obj[f]=func.apply(this,arguments);
+          }
+           return obj[f];
+        }  
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -364,7 +351,6 @@ return function(){
     var result=[];
     var l=array.length;
     var rand=[];
-    var x=rand.length;
     for(var i=0;i<l;i++){
         var r =Math.floor(Math.random()*l)
         if(_.indexOf(rand,r)){
@@ -390,14 +376,48 @@ return function(){
   // Calls the method named by functionOrKey on each value in the list.
   // Note: You will need to learn a bit about .apply to complete this.
   _.invoke = function(collection, functionOrKey, args) {
+    var res=[];
+    
+   _.each(collection, function (ele, key) {
+      if(typeof functionOrKey==="function"){
+      res.push(functionOrKey.apply(ele,args));
+    }
+   else{//var func=JSON.parse(functionOrKey);
+   // console.log(eval(functionOrKey));
+    res.push(ele[functionOrKey].apply(ele,args))
+    }
+   })
+   // talk about that...
+   //http://stackoverflow.com/questions/359788/how-to-execute-a-javascript-function-when-i-have-its-name-as-a-string
+   return res;
   };
-   console.log("just trying")
+  
 
   // Sort the object's values by a criterion produced by an iterator.
   // If iterator is a string, sort objects by that property with the name
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
+    var arr=[];
+    if(typeof iterator==="function"){
+      arr=_.filter(collection,function(val,k){
+        return iterator(val,k);
+      })
+    }else{
+      arr=_.pluck(collection, iterator);
+      //arr.sort(function(a,b){return a.length-b.length;})
+    }
+     
+    if(arr.length!==collection.length){
+      var x=collection.length-arr.length;
+      for(var i=0;i<x;i++){
+        arr.push(undefined);
+      } 
+    }
+    if(typeof arr[0]==="string"){
+      return arr.sort(function(a,b){return a.length-b.length;})
+    }
+      return arr.sort();
   };
 
   // Zip together two or more arrays with elements of the same index
@@ -425,16 +445,72 @@ return function(){
   //
   // Hint: Use Array.isArray to check if something is an array
   _.flatten = function(nestedArray, result) {
+    var arr=[];
+    function nested(x){
+      if(x===undefined || x.length==0){
+        return "";
+      }
+      else if(typeof x[0]==="number"){
+        arr.push(x[0]);
+        x=x.slice(1);
+      }
+      return nested(x[0]) ;
+    }
+    //nested(nestedArray)
+    _.each(nestedArray,function(val,i){
+      if(Array.isArray(val)){
+        nested(val); 
+      }
+      else{
+        arr.push(val);
+      }
+    })
+    return arr;
   };
 
   // Takes an arbitrary number of arrays and produces an array that contains
   // every item shared between all the passed-in arrays.
   _.intersection = function() {
+    var result=[],f=false;
+    var arr=Array.from(arguments);
+    _.each(arr,function(arg,i){
+        _.each(arg,function(val,j){
+           for(var x = 0; x <arr.length; x++) {
+            if(x!==i){
+              if(_.indexOf(arr[x],val)>-1){
+                f=true;
+              }
+              else{f=false;
+               break;}
+            }
+          }
+          if(f && _.indexOf(result,val)===-1){
+          result.push(val);
+          }
+        })
+    })
+    return result;
   };
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
   _.difference = function(array) {
+    var arr=Array.from(arguments).slice(1);
+    var f;
+    return _.reduce(array,function(acc,val,i){
+            f=true;
+      _.each(arr,function(arg,j){
+        if(_.indexOf(arg,val)!==-1){
+          f=false;
+         // break;
+          }
+      })
+      if(f){
+        acc.push(val);
+      }
+      return acc;
+    },[])
+
   };
 
   // Returns a function, that, when invoked, will only be triggered at most once
