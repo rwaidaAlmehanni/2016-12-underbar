@@ -214,19 +214,13 @@ return true;
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
-    var f=false;
-  _.every(collection,function(item){
-    if(iterator!==undefined){
-       if(iterator(item)){
-        f=true;
+    iterator = iterator || _.identity;
+ 
+     return !_.every(collection, function(item) {
+       return !iterator(item);
+    });
+       };
 
-    }}
-    else{ if(item){
-      f=true;
-    }}
-  })
-  return f;
-}
 
 
   /**
@@ -313,7 +307,7 @@ return true;
   _.memoize = function(func) {
     var obj={};
    var arg=Array.prototype.slice.call(arguments,1);
-   var f=JSON.stringify(arguments);
+   //var f=JSON.stringify(arguments);
      return function(){
       var f=JSON.stringify(arguments);
       if (obj[f]===undefined){
